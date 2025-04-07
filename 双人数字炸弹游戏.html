@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>双人数字炸弹游戏</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; }
+        button { padding: 10px 15px; background: #4CAF50; color: white; border: none; cursor: pointer; }
+        input { padding: 8px; width: 100px; }
+        .log { margin-top: 20px; padding: 10px; background: #f5f5f5; }
+    </style>
+</head>
+<body>
+    <h1>双人数字炸弹游戏</h1>
+    <div id="setup">
+        <p>玩家1: <input type="text" id="player1" placeholder="昵称"></p>
+        <p>玩家2: <input type="text" id="player2" placeholder="昵称"></p>
+        <p>数字上限: <input type="number" id="maxNum" value="100" min="10"></p>
+        <button id="startBtn">开始游戏</button>
+    </div>
+    
+    <div id="game" style="display: none;">
+        <h2 id="currentRound"></h2>
+        <div id="currentRange"></div>
+        <div id="guessedNums"></div>
+        <div>
+            <input type="number" id="guessInput">
+            <button id="guessBtn">确认</button>
+        </div>
+        <div class="log" id="gameLog"></div>
+    </div>
+
+    <script>
+        let bomb, currentPlayer, low, high, guessedNumbers = [];
+        const player1 = document.getElementById('player1');
+        const player2 = document.getElementById('player2');
+        const maxNum = document.getElementById('maxNum');
+        const startBtn = document.getElementById('startBtn');
+        const gameDiv = document.getElementById('game');
+        const setupDiv = document.getElementById('setup');
+        const currentRange = document.getElementById('currentRange');
+        const guessedNums = document.getElementById('guessedNums');
+        const gameLog = document.getElementById('gameLog');
+        const guessInput = document.getElementById('guessInput');
+        const guessBtn = document.getElementById('guessBtn');
+        const currentRound = document.getElementById('currentRound');
+
+        startBtn.addEventListener('click', startGame);
+        guessBtn.addEventListener('click', makeGuess);
+
+        function startGame() {
+            if(!player1.value || !player2.value) {
+                alert('请输入两位玩家的昵称！');
+                return;
+            }
+            
+            low = 1;
+            high = parseInt(maxNum.value);
+            bomb = Math.floor(Math.random() * high) + 1;
+            guessedNumbers = [];
+            currentPlayer = Math.random() > 0.5 ? player1.value : player2.value;
+            
+            setupDiv.style.display = 'none';
+            gameDiv.style.display = 'block';
+            
+            updateUI();
+            logMessage(`游戏开始！炸弹数字在 ${low} 到 ${high} 之间。${currentPlayer}先手。`);
+        }
+
+        function makeGuess() {
+            const guess = parseInt(guessInput.value);
+            
+            if(isNaN(guess) || guess < low || guess > high) {
+                alert(`请输入${low}到${high}之间的有效数字！`);
+                return;
+            }
+            
+            if(guessedNumbers.includes(guess)) {
+                alert(`数字${guess}已经猜过了！`);
+                return;
+            }
+            
+            guessedNumbers.push(guess);
+            logMessage(`${currentPlayer} 猜测: ${guess}`);
+            
+            if(guess === bomb) {
+                logMessage(`💥 BOOM！${currentPlayer} 猜中了炸弹数字 ${bomb}！`);
+                logMessage(`${currentPlayer} 输了！`);
+                
+                const winner = currentPlayer === player1.value ? player2.value : player1.value;
+                logMessage(`${winner} 赢得了胜利！🎉`);
+                
+                guessBtn.disabled = true;
+            } else {
+                if(guess < bomb) {
+                    low = guess + 1;
+                    logMessage(`炸弹数字比 ${guess} 大！`);
+                } else {
+                    high = guess - 1;
+                    logMessage(`炸弹数字比 ${guess} 小！`);
+                }
+                
+                currentPlayer = currentPlayer === player1.value ? player2.value : player1.value;
+                guessInput.value = '';
+                updateUI();
+            }
+        }
+
+        function updateUI() {
+            currentRound.textContent = `轮到 ${currentPlayer}`;
+            currentRange.textContent = `当前范围: ${low} ~ ${high}`;
+            guessedNums.textContent = guessedNumbers.length > 0 
+                ? `已猜数字: ${guessedNumbers.join(', ')}` 
+                : '还未猜过数字';
+            guessInput.min = low;
+            guessInput.max = high;
+            guessInput.focus();
+        }
+
+        function logMessage(msg) {
+            gameLog.innerHTML += msg + '<br>';
+            gameLog.scrollTop = gameLog.scrollHeight;
+        }
+    </script>
+</body>
+</html>
